@@ -15,7 +15,9 @@ def get_figure(df):
         nbins=50,
         title='Transaction Amount Distribution by Fraud Type',
         labels={'Fraud_Label': 'Transaction Type'},
-        barmode='overlay'
+        barmode='overlay',
+        template='plotly_white'
     )
+
     fig.update_layout(margin=dict(t=40, l=10, r=10, b=10))
     return fig
