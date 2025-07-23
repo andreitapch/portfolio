@@ -1,5 +1,7 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
+from .evaluation_layout import create_evaluation_tab
+from .plots import time_plot, amount_plot
 
 
 def create_overview_tab(amount_min, amount_max, amount_median):
@@ -44,10 +46,9 @@ def create_dashboard_layout(amount_min, amount_max, amount_median):
             dcc.Tab(label="📈 Time Trend", value="tab-time"),
             dcc.Tab(label="💰 Fraud vs Amount", value="tab-amount"),
             dcc.Tab(label="📉 Model Results", value="tab-results"),
-
         ]),
-        html.Div(
-            id="tabs-content",
-            children=create_overview_tab(amount_min, amount_max, amount_median)
-        )
+        html.Div(id="tab-overview-content", children=create_overview_tab(amount_min, amount_max, amount_median)),
+        html.Div(id="tab-time-content", children=dcc.Graph(id="time-graph")),
+        html.Div(id="tab-amount-content", children=dcc.Graph(id="amount-graph")),
+        html.Div(id="tab-results-content", children=create_evaluation_tab())
     ], fluid=True)

@@ -1,0 +1,6 @@
+artifact_location: file:///D:/Dev/portfolio/fraud_detection/models/mlruns/812452389904550111
+creation_time: 1753290002496
+experiment_id: '812452389904550111'
+last_update_time: 1753290002496
+lifecycle_stage: active
+name: fraud_autoencoder

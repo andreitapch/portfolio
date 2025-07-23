@@ -4,48 +4,62 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
-import matplotlib.pyplot as plt
+import joblib
 import mlflow.pytorch
 from datetime import datetime
+import matplotlib.pyplot as plt
 
 from fraud_detection.models.autoencoder import Autoencoder
 from fraud_detection.models.AutoencoderPreprocessor import AutoencoderPreprocessor
 from fraud_detection.src.data_loader import DataLoader as CSVLoader
 
-
+# MLflow setup
 mlflow.set_tracking_uri("file:./mlruns")
 mlflow.set_experiment("fraud_autoencoder")
 
-
+# Timestamp for saved files
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-
+# Hyperparameters
 EPOCHS = 20
 BATCH_SIZE = 512
 LEARNING_RATE = 1e-3
 LATENT_DIM = 16
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+ROOT_PATH = os.path.dirname(os.getcwd())
 
+# Output paths
+MODEL_PATH = f"{ROOT_PATH}/data/model_output/autoencoder_{timestamp}.pt"
+LOSS_PLOT_PATH = f"{ROOT_PATH}/data/results/ae_loss_curve_{timestamp}.png"
+SCALER_PATH = f"{ROOT_PATH}/data/model_output/scaler_{timestamp}.pkl"
 
-MODEL_PATH = f"fraud_detection/data/model_output/autoencoder_{timestamp}.pt"
-LOSS_PLOT_PATH = f"fraud_detection/data/results/ae_loss_curve_{timestamp}.png"
-os.makedirs("fraud_detection/data/model_output", exist_ok=True)
-os.makedirs("fraud_detection/data/results", exist_ok=True)
+# Ensure directories exist
+os.makedirs(f"{ROOT_PATH}/data/model_output", exist_ok=True)
+os.makedirs(f"{ROOT_PATH}/data/results", exist_ok=True)
 
 print(f"Using device: {DEVICE}")
 
+# Load and preprocess data
 csv_loader = CSVLoader()
-df = csv_loader.load_data()
+credit_card_df = csv_loader.load_data()
+
 preprocessor = AutoencoderPreprocessor()
-train_df = preprocessor.get_train_data(df)
+X_train, y_train = preprocessor.fit_transform(credit_card_df)
 
-X_train = torch.tensor(train_df.values, dtype=torch.float32)
-train_loader = DataLoader(TensorDataset(X_train), batch_size=BATCH_SIZE, shuffle=True)
+# Save fitted scaler
+joblib.dump(preprocessor.scaler, SCALER_PATH)
+print(f"Scaler saved to {SCALER_PATH}")
 
-model = Autoencoder(input_dim=X_train.shape[1]).to(DEVICE)
+# Convert to PyTorch tensor
+X_tensor = torch.tensor(X_train.values, dtype=torch.float32)
+train_loader = DataLoader(TensorDataset(X_tensor), batch_size=BATCH_SIZE, shuffle=True)
+
+# Initialize model
+model = Autoencoder(input_dim=X_tensor.shape[1]).to(DEVICE)
 criterion = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
+# Train with MLflow tracking
 with mlflow.start_run():
     mlflow.log_params({
         "epochs": EPOCHS,
@@ -75,6 +89,7 @@ with mlflow.start_run():
         print(f"Epoch [{epoch + 1}/{EPOCHS}] - Loss: {avg_loss:.6f}")
         mlflow.log_metric("loss", avg_loss, step=epoch)
 
+    # Save model and loss curve
     torch.save(model.state_dict(), MODEL_PATH)
     mlflow.pytorch.log_model(model, artifact_path="model")
     print(f"Model saved to {MODEL_PATH}")

@@ -1,0 +1,14 @@
+artifact_uri: file:///D:/Dev/portfolio/fraud_detection/models/mlruns/812452389904550111/7d71a2104ad04469a314f16b4a0227bd/artifacts
+end_time: 1753290098713
+entry_point_name: ''
+experiment_id: '812452389904550111'
+lifecycle_stage: active
+run_id: 7d71a2104ad04469a314f16b4a0227bd
+run_name: sedate-mole-273
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1753290009218
+status: 3
+tags: []
+user_id: andre
